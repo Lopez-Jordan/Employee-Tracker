@@ -1,37 +1,46 @@
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
+const { promisify } = require('util');
 
-const db = mysql.createConnection( 
-    {
-        host: '127.0.0.1',
-        user: 'root',
-        password: 'password',
-        database: 'employees_db'
-    },
-    console.log("Connected to the database!")
-)
+const db = mysql.createConnection({
+    host: '127.0.0.1',
+    user: 'root',
+    password: 'password',
+    database: 'employees_db',
+});
+
+// Promisify the db.query function
+const queryAsync = promisify(db.query).bind(db);
+
 greet();
 init();
 
-async function init(){
-    while (true){
+async function init() {
+    while (true) {
         console.log("\n\n");
         let data = await promptUser();
-        if (data.action === "view all departments"){
-            db.query('SELECT * FROM department',(error, response)=>{
-                error ? console.log(error) : console.log("success!");
-                console.log(response);  // needs to be in a nice formatted table
-            });
+        if (data.action === "view all departments") {
+            try {
+                const response = await queryAsync('SELECT * FROM department');
+                console.log("success!");
+                console.table(response);
+            } catch (error) {
+                console.log(error);
+            }
         }
-        else if (data.action === "view all roles"){
-            db.query('SELECT * FROM role', (error, response)=>{
-                error ? console.log(error) : console.log("success!");
-                console.log(response);      // and what department it belongs to!!
-            });
+        else if (data.action === "view all roles") {
+            try {
+                const response = await queryAsync('SELECT role.*, department.name AS department_name FROM role LEFT JOIN department ON role.department_id = department.id');
+                console.log("success!");
+                console.table(response);
+            } catch (error) {
+                console.log(error);
+            }
         }
-        else if (data.action === "view all employees"){
-            db.query(`
-                        SELECT 
+        else if (data.action === "view all employees") {
+            try {
+                const response = await queryAsync(`
+                    SELECT 
                         emp.id AS employee_id,
                         emp.first_name,
                         emp.last_name,
@@ -47,12 +56,14 @@ async function init(){
                         department ON role.department_id = department.id
                     LEFT JOIN 
                         employee manager ON emp.manager_id = manager.id;
-                    `, (error, response)=>{
-                error ? console.log(error) : console.log('success!');
-                console.log(response);
-            });
+                `);
+                console.log('success!');
+                console.table(response);
+            } catch (error) {
+                console.log(error);
+            }
         }
-        else if (data.action === "add a department"){
+        else if (data.action === "add a department") {
             let answers = await inquirer.prompt([
                 {
                     type: 'input',
@@ -61,10 +72,13 @@ async function init(){
                 }
             ]);
             let department = answers.departmentName;
-            db.query(`INSERT INTO department(name) VALUES (?)`, department,(error, response)=>{
-                error ? console.log(error) : console.log('success!');
-                console.log(response)
-            });
+            try {
+                const response = await queryAsync('INSERT INTO department(name) VALUES (?)', department);
+                console.log('success!');
+                console.log(response);
+            } catch (error) {
+                console.log(error);
+            }
         }
         else if (data.action === "add a role") {
             let answers = await inquirer.prompt([
@@ -84,35 +98,31 @@ async function init(){
                     message: "Enter the department ID for this role:"
                 }
             ]);
-        
+
             let { roleName, salary, departmentId } = answers;
-            db.query(`INSERT INTO role(title, salary, department_id) VALUES (?, ?, ?)`, [roleName, salary, departmentId], (error, response) => {
-                error ? console.log(error) : console.log('success!');
+            try {
+                const response = await queryAsync('INSERT INTO role(title, salary, department_id) VALUES (?, ?, ?)', [roleName, salary, departmentId]);
+                console.log('success!');
                 console.log(response);
-            });
+            } catch (error) {
+                console.log(error);
+            }
         }
-        
-
-
-
-
-
-
-
-
-
-
-        
-        else if (data.action === "update an employee role"){
-            console.log("works")
+        /////////////////////////////////////////////////////
+        else if (data.action === "add an employee") {
+            // Add your code to add an employee here
         }
-        else{
+        else if (data.action === "update an employee role") {
+            // Add your code to update an employee role here
+        }
+        else {
             console.log("quit");
             break;
         }
     }
     console.log('Goodbye!');
-};
+}
+
 
 
 function promptUser(){

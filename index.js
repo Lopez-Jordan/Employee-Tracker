@@ -66,10 +66,43 @@ async function init(){
                 console.log(response)
             });
         }
-        else if (data.action === "add a role"){
+        else if (data.action === "add a role") {
+            let answers = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: "roleName",
+                    message: "What would you like to name the role?"
+                },
+                {
+                    type: 'input',
+                    name: "salary",
+                    message: "What is the salary for this role?"
+                },
+                {
+                    type: 'input',
+                    name: "departmentId",
+                    message: "Enter the department ID for this role:"
+                }
+            ]);
+        
+            let { roleName, salary, departmentId } = answers;
+            db.query(`INSERT INTO role(title, salary, department_id) VALUES (?, ?, ?)`, [roleName, salary, departmentId], (error, response) => {
+                error ? console.log(error) : console.log('success!');
+                console.log(response);
+            });
         }
-        else if (data.action === "add an employee"){
-        }
+        
+
+
+
+
+
+
+
+
+
+
+        
         else if (data.action === "update an employee role"){
             console.log("works")
         }

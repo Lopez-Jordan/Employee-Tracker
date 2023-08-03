@@ -12,11 +12,13 @@ const db = mysql.createConnection({
 // Promisify the db.query function
 const queryAsync = promisify(db.query).bind(db);
 
-greet();
+
 init();
 
 async function init() {
     while (true) {
+        console.log("\n\n");
+        greet();
         console.log("\n\n");
         let data = await promptUser();
         if (data.action === "view all departments") {
@@ -108,10 +110,62 @@ async function init() {
                 console.log(error);
             }
         }
-        /////////////////////////////////////////////////////
+
         else if (data.action === "add an employee") {
-            // Add your code to add an employee here
+            try {
+                let roleData = await queryAsync('SELECT id, title FROM role');
+                let roleChoices = roleData.map(role => role.title);
+        
+                let managerData = await queryAsync('SELECT id, CONCAT(first_name, " ", last_name) AS manager_name FROM employee');
+                let managerChoices = managerData.map(manager => manager.manager_name);
+        
+                let answers = await inquirer.prompt([
+                    {
+                        type: 'input',
+                        name: 'firstName',
+                        message: "What is the first name of the employee?"
+                    },
+                    {
+                        type: 'input',
+                        name: "lastName",
+                        message: "What is the last name of the employee?"
+                    },
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: 'What is the role of the employee?',
+                        choices: roleChoices
+                    },
+                    {
+                        type: 'list',
+                        name: 'manager',
+                        message: 'Who is the employee\'s manager?',
+                        choices: managerChoices.concat('None')
+                    }
+                ]);
+        
+                // Get the role ID based on the selected role title
+                const selectedRole = roleData.find(role => role.title === answers.role);
+                const roleId = selectedRole.id;
+        
+                // Get the manager ID based on the selected manager name
+                const selectedManager = managerData.find(manager => manager.manager_name === answers.manager);
+                const managerId = selectedManager ? selectedManager.id : null;
+        
+                // Insert the employee data into the employee table
+                const { firstName, lastName } = answers;
+                await queryAsync('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [firstName, lastName, roleId, managerId]);
+                console.log('Employee added successfully!');
+            } catch (error) {
+                console.log(error);
+            }
         }
+        
+        
+
+
+
+
         else if (data.action === "update an employee role") {
             // Add your code to update an employee role here
         }

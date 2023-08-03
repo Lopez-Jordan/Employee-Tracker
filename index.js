@@ -1,51 +1,77 @@
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
 
+const db = mysql.createConnection( 
+    {
+        host: '127.0.0.1',
+        user: 'root',
+        password: 'password',
+        database: 'employees_db'
+    },
+    console.log("Connected to the database!")
+)
+greet();
 init();
 
 async function init(){
     while (true){
+        console.log("/n/n");
         let data = await promptUser();
-        console.log(data);
-        if(data.action === "quit"){
-            break;
-        }
-        else if (data.action === "view all departments"){
-            console.log("works");
+        if (data.action === "view all departments"){
+            db.query('SELECT * FROM department',(error, response)=>{
+                error ? console.log(error) : console.log("success!");
+                console.log(response);  // needs to be in a nice formatted table
+            });
         }
         else if (data.action === "view all roles"){
-            console.log("works");
+            db.query('SELECT * FROM role', (error, response)=>{
+                error ? console.log(error) : console.log("success!");
+                console.log(response);
+            });
         }
         else if (data.action === "view all employees"){
-            console.log("works");
+            db.query(`
+                        SELECT 
+                        emp.id AS employee_id,
+                        emp.first_name,
+                        emp.last_name,
+                        role.title AS job_title,
+                        department.name AS department,
+                        role.salary,
+                        CONCAT(manager.first_name, ' ', manager.last_name) AS manager_name
+                    FROM 
+                        employee emp
+                    LEFT JOIN 
+                        role ON emp.role_id = role.id
+                    LEFT JOIN 
+                        department ON role.department_id = department.id
+                    LEFT JOIN 
+                        employee manager ON emp.manager_id = manager.id;
+                    `, (error, response)=>{
+                error ? console.log(error) : console.log('success!');
+                console.log(response);
+            });
         }
         else if (data.action === "add a department"){
-            console.log("works");
         }
         else if (data.action === "add a role"){
-            console.log("works");
         }
         else if (data.action === "add an employee"){
-            console.log("works");
         }
         else if (data.action === "update an employee role"){
             console.log("works")
         }
         else{
             console.log("quit");
+            break;
         }
-    
-            
-
-    
-    
     }
     console.log('Goodbye!');
 };
 
 
-async function promptUser(){
-    const answers = await inquirer.prompt([
+function promptUser(){
+    const answers = inquirer.prompt([
         {
             type: 'list',
             name: 'action',
@@ -56,6 +82,16 @@ async function promptUser(){
     ]);
     return answers;
 }
-// prompt user
-// use that data and perform some sort of action in the db
-//
+
+function greet() {
+    console.log(`
+      _______ _______  _____          _____  __   __ _______ _______     
+      |______ |  |  | |_____] |      |     |   \_/   |______ |______     
+      |______ |  |  | |       |_____ |_____|    |    |______ |______     
+                                                                         
+      _______ _______ __   _ _______  ______ _______  ______             
+      |  |  | |_____| | \\  | |_____| |  ____ |______ |_____/             
+      |  |  | |     | |  \\_| |     | |_____| |______ |    \\_             
+                                                                         
+    `);
+  }

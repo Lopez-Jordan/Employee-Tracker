@@ -15,7 +15,7 @@ init();
 
 async function init(){
     while (true){
-        console.log("/n/n");
+        console.log("\n\n");
         let data = await promptUser();
         if (data.action === "view all departments"){
             db.query('SELECT * FROM department',(error, response)=>{
@@ -26,7 +26,7 @@ async function init(){
         else if (data.action === "view all roles"){
             db.query('SELECT * FROM role', (error, response)=>{
                 error ? console.log(error) : console.log("success!");
-                console.log(response);
+                console.log(response);      // and what department it belongs to!!
             });
         }
         else if (data.action === "view all employees"){
@@ -53,6 +53,18 @@ async function init(){
             });
         }
         else if (data.action === "add a department"){
+            let answers = await inquirer.prompt([
+                {
+                    type: 'input',
+                    name: "departmentName",
+                    message: "What would you like to name the department?"
+                }
+            ]);
+            let department = answers.departmentName;
+            db.query(`INSERT INTO department(name) VALUES (?)`, department,(error, response)=>{
+                error ? console.log(error) : console.log('success!');
+                console.log(response)
+            });
         }
         else if (data.action === "add a role"){
         }
@@ -71,7 +83,7 @@ async function init(){
 
 
 function promptUser(){
-    const answers = inquirer.prompt([
+    let answers = inquirer.prompt([
         {
             type: 'list',
             name: 'action',

@@ -12,14 +12,11 @@ const db = mysql.createConnection({
 // Promisify the db.query function
 const queryAsync = promisify(db.query).bind(db);
 
-
 init();
 
 async function init() {
+    greet();
     while (true) {
-        console.log("\n\n");
-        greet();
-        console.log("\n\n");
         let data = await promptUser();
         if (data.action === "view all departments") {
             try {
@@ -144,15 +141,12 @@ async function init() {
                     }
                 ]);
         
-                // Get the role ID based on the selected role title
                 const selectedRole = roleData.find(role => role.title === answers.role);
                 const roleId = selectedRole.id;
         
-                // Get the manager ID based on the selected manager name
                 const selectedManager = managerData.find(manager => manager.manager_name === answers.manager);
                 const managerId = selectedManager ? selectedManager.id : null;
         
-                // Insert the employee data into the employee table
                 const { firstName, lastName } = answers;
                 await queryAsync('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)', [firstName, lastName, roleId, managerId]);
                 console.log('Employee added successfully!');
@@ -160,14 +154,36 @@ async function init() {
                 console.log(error);
             }
         }
-        
-        
-
-
-
-
         else if (data.action === "update an employee role") {
-            // Add your code to update an employee role here
+            try{
+                let employees = await queryAsync('SELECT first_name, last_name FROM employee');
+                employees = employees.map(emp => emp.first_name + " " + emp.last_name);
+
+                let roles = await queryAsync('SELECT title FROM role');
+                roles = roles.map(role => role.title);
+
+                let answer = await inquirer.prompt([
+                    {
+                        type: 'list',
+                        message: "Which employee do you want to update?",
+                        name: 'employeeToUpdate',
+                        choices: employees
+                    },
+                    {
+                        type: 'list',
+                        message: 'What role do you want to assign?',
+                        name: 'role',
+                        choices: roles
+                    }
+                ]);
+                let fullName = answer.employeeToUpdate.split(' ');
+
+                let roleIdResult = await queryAsync('SELECT id FROM role WHERE title = ?', answer.role);
+                let roleId = roleIdResult[0].id;
+                let response = await queryAsync('UPDATE employee SET role_id = ? WHERE (first_name = ? AND last_name = ?)',[roleId, fullName[0], fullName[1]]);
+            } catch (error){
+                console.log(error);
+            }
         }
         else {
             console.log("quit");
@@ -176,11 +192,8 @@ async function init() {
     }
     console.log('Goodbye!');
 }
-
-
-
-function promptUser(){
-    let answers = inquirer.prompt([
+async function promptUser(){
+    let answers = await inquirer.prompt([
         {
             type: 'list',
             name: 'action',

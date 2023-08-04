@@ -21,7 +21,6 @@ async function init() {
         if (data.action === "view all departments") {
             try {
                 const response = await queryAsync('SELECT * FROM department');
-                console.log("success!");
                 console.table(response);
             } catch (error) {
                 console.log(error);
@@ -30,7 +29,6 @@ async function init() {
         else if (data.action === "view all roles") {
             try {
                 const response = await queryAsync('SELECT role.*, department.name AS department_name FROM role LEFT JOIN department ON role.department_id = department.id');
-                console.log("success!");
                 console.table(response);
             } catch (error) {
                 console.log(error);
@@ -73,13 +71,15 @@ async function init() {
             let department = answers.departmentName;
             try {
                 const response = await queryAsync('INSERT INTO department(name) VALUES (?)', department);
-                console.log('success!');
-                console.log(response);
+                console.log(`success! added ${department} to the database`);
             } catch (error) {
                 console.log(error);
             }
         }
         else if (data.action === "add a role") {
+            let allDepartments = await queryAsync('SELECT name FROM department');
+            allDepartments = allDepartments.map(el => el.name);
+
             let answers = await inquirer.prompt([
                 {
                     type: 'input',
@@ -92,17 +92,24 @@ async function init() {
                     message: "What is the salary for this role?"
                 },
                 {
-                    type: 'input',
-                    name: "departmentId",
-                    message: "Enter the department ID for this role:"
+                    type: 'list',
+                    name: "department",
+                    message: "Which department?",
+                    choices: allDepartments
                 }
             ]);
 
-            let { roleName, salary, departmentId } = answers;
+            let { roleName, salary, department } = answers;
+            let departmentResult = await queryAsync(`SELECT role.department_id FROM role
+                                                        JOIN department ON role.department_id = department.id 
+                                                        WHERE department.name = ?`, department);
+            
+            let department_id = departmentResult.length > 0 ? departmentResult[0].department_id : null;
+            let response =  await queryAsync(`INSERT INTO role(title, salary, department_id)
+                                                VALUES (?, ?, ?)`, [roleName, salary, department_id]);
             try {
-                const response = await queryAsync('INSERT INTO role(title, salary, department_id) VALUES (?, ?, ?)', [roleName, salary, departmentId]);
+                const response = await queryAsync
                 console.log('success!');
-                console.log(response);
             } catch (error) {
                 console.log(error);
             }
@@ -186,7 +193,6 @@ async function init() {
             }
         }
         else {
-            console.log("quit");
             break;
         }
     }

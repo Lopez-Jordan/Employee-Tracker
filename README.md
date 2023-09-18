@@ -3,12 +3,11 @@
 
 # Employee Tracker
 
-[Walkthrough Video](https://drive.google.com/file/d/1pptHBw5KprhblyS2n2AVz5LuV7JmaqCi/view)
+check out the [Walkthrough Video](https://drive.google.com/file/d/1pptHBw5KprhblyS2n2AVz5LuV7JmaqCi/view)
 
 ## Description
-For this project, this is the first time I worked with a database to store information that persists. Even though it is not a deployed application,
-the data will be stored locally on your machine. Employee Tracker is a great way for any company to manage their employees, roles, manager, and department name 
-in a quick and easy to use node.js application.
+For this project, I used SQL with the mySql shell to make an employee tracker. This application uses raw SQL queries so that any business owner can keep track of their `departments` (by name and id) which has many `roles` (title, salary, department_id) which has many `employees` (id, first_name, last_name, role_id, manager_id)
+
 
 ## Installation
 To install this project, all you need to do is clone the repository name, install mysql2, install the provided dependencies and run node index.js in the directory of your cloned project!
